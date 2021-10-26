@@ -1,4 +1,4 @@
-# uncertainty-estimation
+# MLFlow Wine Quality
 
 ## Configuring remote server
 
