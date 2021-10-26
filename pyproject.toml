@@ -1,0 +1,21 @@
+[tool.poetry]
+name = "mlflow-learn"
+version = "0.1.0"
+description = ""
+authors = ["mt-edwards <38671647+mt-edwards@users.noreply.github.com>"]
+
+[tool.poetry.dependencies]
+python = "^3.9"
+mlflow = "^1.19.0"
+scikit-learn = "^0.24.2"
+azure-storage-blob = "^12.8.1"
+
+[tool.poetry.dev-dependencies]
+pytest = "^5.2"
+ipython = "^7.26.0"
+ipykernel = "^6.0.3"
+azure-storage-blob = "^12.8.1"
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"

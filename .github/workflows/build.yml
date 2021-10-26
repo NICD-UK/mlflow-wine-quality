@@ -1,0 +1,86 @@
+# This is a basic workflow to help you get started with Actions
+
+name: CI
+
+# Controls when the workflow will run
+# Triggers the workflow on push or pull request events 
+# workflow_dispatch allows you to run workflow manually
+on:
+  push:
+    branches:
+      - mlflow
+      - deterministic
+      - mcdropout
+      - ensemble
+      - sngp
+  pull_request:
+    branches:
+      - mlflow
+      - deterministic
+      - mcdropout
+      - ensemble
+      - sngp
+  workflow_dispatch:
+
+# A workflow run is made up of one or more jobs that can run sequentially or in parallel
+jobs:
+  # This workflow contains a single job called "build"
+  build:
+    # The type of runner that the job will run on
+    runs-on: ubuntu-latest
+
+    # Steps represent a sequence of tasks that will be executed as part of the job
+    steps:
+
+      # extract branch name
+      - name: Extract branch name
+        shell: bash
+        run: echo "##[set-output name=branch;]$(echo ${GITHUB_REF#refs/heads/})"
+        id: extract_branch
+
+      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
+      - uses: actions/checkout@v2
+        with:
+          ref: ${{ steps.extract_branch.outputs.branch }}
+
+      - name: Set up Python 3.9
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.9
+      
+      - name: Setup SSH Key
+        run: |
+          mkdir -p ~/.ssh;
+          chmod 700 ~/.ssh;
+          printf "Host * \n    StrictHostKeyChecking no" > ~/.ssh/config;
+          chmod 400 ~/.ssh/config;
+          echo "${{ secrets.ACTIONS_PRIVATE_KEY }}" > ~/.ssh/id_rsa;
+          chmod 600 ~/.ssh/id_rsa;
+          
+      - name: Install Poetry
+        uses: abatilo/actions-poetry@v2.0.0
+        with:
+          poetry-version: 1.1.5
+          
+      - name: Install Dependencies
+        run: |
+           pip install paramiko;
+           poetry config virtualenvs.create false \
+            && poetry install
+          
+      - name: Run Tests
+        run: |
+          python -m pytest tests
+      
+      # We use the branch name to select the relevant experiment
+      - name: Build Docker and Run MLFlow
+        run: |
+          docker build -t uq . && mlflow run . -A gpus=all -e ${{ steps.extract_branch.outputs.branch }}
+        # Don't do this (below) as it will not use the latest code! Leaving in as an example of running arbitary command via the ssh connection.
+        # ssh -f arcnicd@mlflow.uksouth.cloudapp.azure.com "source ~/.profile; cd uncertainty-estimation; mlflow run . -A d"
+        env:
+          MLFLOW_TRACKING_USERNAME: ${{ secrets.MLFLOW_TRACKING_USERNAME }}
+          MLFLOW_TRACKING_PASSWORD: ${{ secrets.MLFLOW_TRACKING_PASSWORD }}
+          MLFLOW_TRACKING_URI: ${{ secrets.MLFLOW_TRACKING_URI }}
+          AZURE_STORAGE_ACCESS_KEY: ${{ secrets.AZURE_STORAGE_ACCESS_KEY }}
+          DOCKER_HOST: ${{ secrets.DOCKER_HOST }}

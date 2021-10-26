@@ -1,0 +1,17 @@
+name: mlflow-learn
+
+docker_env: 
+  image: uq
+  environment: ["MLFLOW_TRACKING_USERNAME", "MLFLOW_TRACKING_PASSWORD"]
+
+entry_points:
+  main:
+    parameters:
+      alpha: {type: float, default: 0.5}
+      l1_ratio: {type: float, default: 0.5}
+    command: "python uncertainty_estimation/train.py {alpha} {l1_ratio}"
+  mlflow:
+    parameters:
+      alpha: {type: float, default: 0.5}
+      l1_ratio: {type: float, default: 0.5}
+    command: "python uncertainty_estimation/train.py {alpha} {l1_ratio}"
